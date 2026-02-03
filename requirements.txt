@@ -1,0 +1,17 @@
+# Python dependencies for Email Excel Monitor
+
+# Email handling
+imaplib2==3.6
+
+# Excel file processing
+openpyxl==3.1.2
+
+# HTTP requests for Telegram API
+requests==2.31.0
+
+# Additional utilities (installed by default in most Python environments)
+# email - built-in
+# datetime - built-in
+# os - built-in
+# sys - built-in
+# io - built-in
