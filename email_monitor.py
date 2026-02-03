@@ -2,6 +2,7 @@
 """
 Email Excel Monitor with Telegram Notifications
 Monitors email inbox for Excel attachments, scans for specified name, and sends Telegram alerts.
+Only processes emails from the last X minutes to avoid processing large backlogs.
 """
 
 import imaplib
@@ -9,7 +10,7 @@ import email
 from email.header import decode_header
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 import requests
 import openpyxl
 import io
@@ -99,14 +100,21 @@ def connect_to_email(email_address, app_password, imap_server='imap.gmail.com'):
         sys.exit(1)
 
 
-def process_emails(mail, search_name, bot_token, chat_id):
-    """Process unread emails and check for Excel attachments."""
+def process_emails(mail, search_name, bot_token, chat_id, check_last_minutes=10):
+    """Process only emails received in the last X minutes."""
     
     # Select inbox
     mail.select('INBOX')
     
-    # Search for unread emails
-    status, messages = mail.search(None, 'UNSEEN')
+    # Calculate the date to search from (e.g., last 10 minutes)
+    # Add a small buffer to account for clock differences
+    since_time = datetime.now() - timedelta(minutes=check_last_minutes)
+    since_date = since_time.strftime("%d-%b-%Y")
+    
+    print(f"Searching for emails since {since_time.strftime('%Y-%m-%d %H:%M:%S')}")
+    
+    # Search for emails received after the specified date (read or unread)
+    status, messages = mail.search(None, f'SINCE {since_date}')
     
     if status != 'OK':
         print("✗ Failed to search emails")
@@ -115,12 +123,13 @@ def process_emails(mail, search_name, bot_token, chat_id):
     email_ids = messages[0].split()
     
     if not email_ids:
-        print(f"No unread emails found at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"No emails found in the last {check_last_minutes} minutes at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         return
     
-    print(f"Found {len(email_ids)} unread email(s)")
+    print(f"Found {len(email_ids)} email(s) in the last {check_last_minutes} minutes")
     
     total_matches = 0
+    processed_count = 0
     
     for email_id in email_ids:
         try:
@@ -139,8 +148,23 @@ def process_emails(mail, search_name, bot_token, chat_id):
             from_email = email_message.get('From')
             date = email_message.get('Date')
             
+            # Parse the date to check if it's actually within our time window
+            try:
+                from email.utils import parsedate_to_datetime
+                email_datetime = parsedate_to_datetime(date)
+                
+                # Skip if email is older than our time window
+                if email_datetime < since_time:
+                    continue
+            except:
+                # If we can't parse the date, process it anyway to be safe
+                pass
+            
+            processed_count += 1
+            
             print(f"\n📧 Processing: {subject}")
             print(f"   From: {from_email}")
+            print(f"   Date: {date}")
             
             # Check for attachments
             excel_found = False
@@ -172,6 +196,7 @@ def process_emails(mail, search_name, bot_token, chat_id):
                                 message = f"🔔 <b>Name Match Found!</b>\n\n"
                                 message += f"📧 <b>Email:</b> {subject}\n"
                                 message += f"👤 <b>From:</b> {from_email}\n"
+                                message += f"📅 <b>Date:</b> {date}\n"
                                 message += f"📎 <b>File:</b> {filename}\n"
                                 message += f"🔍 <b>Search term:</b> {search_name}\n\n"
                                 message += f"<b>Matches ({len(matches)}):</b>\n"
@@ -196,6 +221,7 @@ def process_emails(mail, search_name, bot_token, chat_id):
             continue
     
     print(f"\n{'='*60}")
+    print(f"Processed {processed_count} recent email(s)")
     print(f"Scan complete: {total_matches} total match(es) found")
     print(f"{'='*60}\n")
 
@@ -214,6 +240,12 @@ def main():
     bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
     chat_id = os.getenv('TELEGRAM_CHAT_ID')
     imap_server = os.getenv('IMAP_SERVER', 'imap.gmail.com')
+    
+    # Time window for checking emails (default 10 minutes)
+    try:
+        check_last_minutes = int(os.getenv('CHECK_LAST_MINUTES', '10'))
+    except ValueError:
+        check_last_minutes = 10
     
     # Validate required variables
     required_vars = {
@@ -238,6 +270,7 @@ def main():
     print(f"  IMAP Server: {imap_server}")
     print(f"  Search Name: {search_name}")
     print(f"  Telegram Chat ID: {chat_id}")
+    print(f"  Time Window: Last {check_last_minutes} minutes")
     print()
     
     # Connect to email
@@ -245,7 +278,7 @@ def main():
     
     try:
         # Process emails
-        process_emails(mail, search_name, bot_token, chat_id)
+        process_emails(mail, search_name, bot_token, chat_id, check_last_minutes)
     finally:
         # Logout
         try:
