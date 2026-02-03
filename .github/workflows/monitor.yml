@@ -33,4 +33,4 @@ jobs:
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         IMAP_SERVER: ${{ secrets.IMAP_SERVER || 'imap.gmail.com' }}
         CHECK_LAST_MINUTES: '10'  # Check emails from last 10 minutes (with buffer for 5-min runs)
-      run: python email_excel_monitor.py
+      run: python email_monitor.py
