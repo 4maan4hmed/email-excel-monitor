@@ -4,6 +4,8 @@ on:
     - cron: '*/5 7-23 * * *'  # Every 5 min, 6 AM - 11 PM
     - cron: '0 6 * * *'        # Once at 6 AM (catches overnight emails)
   workflow_dispatch:
+permissions:
+  contents: write 
 
 jobs:
   monitor:
