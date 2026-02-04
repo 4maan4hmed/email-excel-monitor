@@ -1,10 +1,9 @@
 name: Email Excel Monitor
-
 on:
   schedule:
-    # Runs every 5 minutes
-    - cron: '*/5 * * * *'
-  workflow_dispatch:  # Allows manual triggering
+    - cron: '*/5 7-23 * * *'  # Every 5 min, 6 AM - 11 PM
+    - cron: '0 6 * * *'        # Once at 6 AM (catches overnight emails)
+  workflow_dispatch:
 
 jobs:
   monitor:
@@ -13,6 +12,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
     
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -24,6 +25,18 @@ jobs:
         python -m pip install --upgrade pip
         pip install requests openpyxl
     
+    - name: Determine check window
+      id: check_window
+      run: |
+        HOUR=$(date +%H)
+        if [ "$HOUR" -eq 6 ]; then
+          echo "CHECK_MINUTES=720" >> $GITHUB_OUTPUT
+          echo "Morning scan - checking last 12 hours"
+        else
+          echo "CHECK_MINUTES=90" >> $GITHUB_OUTPUT
+          echo "Regular scan - checking last 90 minutes"
+        fi
+    
     - name: Run email monitor
       env:
         EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
@@ -32,5 +45,12 @@ jobs:
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         IMAP_SERVER: ${{ secrets.IMAP_SERVER || 'imap.gmail.com' }}
-        CHECK_LAST_MINUTES: '10'  # Check emails from last 10 minutes (with buffer for 5-min runs)
+        CHECK_LAST_MINUTES: ${{ steps.check_window.outputs.CHECK_MINUTES }}
       run: python email_monitor.py
+    
+    - name: Commit processed emails
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add processed_emails.json
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Update processed emails [skip ci]" && git push)
