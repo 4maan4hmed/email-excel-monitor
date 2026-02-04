@@ -1,28 +1,28 @@
-# 📧 Email Excel Monitor with Telegram Notifications
+# Email Excel Monitor with Telegram Notifications
 
-A cloud-hosted, automated system that monitors your email inbox for Excel attachments, scans them for specific names or keywords, and sends instant Telegram notifications when matches are found. Runs completely free on GitHub Actions with no server required!
+A cloud-hosted, automated system that monitors your email inbox for Excel attachments, scans them for specific names or keywords, and sends instant Telegram notifications when matches are found. Runs completely free on GitHub Actions with no server required.
 
-## 🌟 Features
+## Features
 
-- ✅ **Automated Monitoring**: Checks your inbox every 5 minutes automatically
-- 📊 **Excel Scanning**: Scans all sheets in `.xlsx`, `.xls`, and `.xlsm` files
-- 🔍 **Smart Search**: Finds your name/keyword in any cell across all worksheets
-- 📱 **Telegram Alerts**: Instant notifications with email details and match locations
-- 🔒 **Secure**: All credentials stored as encrypted GitHub Secrets
-- ☁️ **Cloud-Hosted**: Runs on GitHub Actions - no server needed
-- 🆓 **Completely Free**: Uses GitHub's free tier (2,000 minutes/month)
+- **Automated Monitoring**: Checks your inbox every 5 minutes automatically
+- **Excel Scanning**: Scans all sheets in `.xlsx`, `.xls`, and `.xlsm` files
+- **Smart Search**: Finds your name/keyword in any cell across all worksheets
+- **Telegram Alerts**: Instant notifications with email details and match locations
+- **Secure**: All credentials stored as encrypted GitHub Secrets
+- **Cloud-Hosted**: Runs on GitHub Actions with no server needed
+- **Free**: Uses GitHub's free tier (2,000 minutes/month)
 
-## 🚀 Quick Start Guide
+## Quick Start Guide
 
 ### Step 1: Create Telegram Bot
 
 1. Open Telegram and search for `@BotFather`
 2. Send `/newbot` and follow the prompts
 3. Copy the **Bot Token** (looks like `110201543:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw`)
-4. Start a chat with your new bot (send any message)
+4. Start a chat with your new bot by sending any message
 5. Get your Chat ID:
    - Visit: `https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates`
-   - Find your `chat_id` in the JSON response (it's a number like `123456789`)
+   - Find your `chat_id` in the JSON response (a number like `123456789`)
 
 ### Step 2: Set Up Email App Password
 
@@ -45,17 +45,17 @@ A cloud-hosted, automated system that monitors your email inbox for Excel attach
 
 ### Step 3: Create GitHub Repository
 
-1. **Create a new private repository** on GitHub
+1. Create a new **private repository** on GitHub
 2. Click "Add file" → "Upload files"
 3. Upload these three files from this project:
    - `email_monitor.py`
    - `requirements.txt`
    - `.github/workflows/monitor.yml`
 
-Or use Git:
+Alternatively, use Git:
 ```bash
-git clone <your-repo-url>
-cd <your-repo-name>
+git clone https://github.com/4maan4hmed/email-excel-monitor
+cd email-excel-monitor
 # Copy the three files here
 git add .
 git commit -m "Initial setup"
@@ -72,13 +72,13 @@ git push
 |-------------|-------|---------|
 | `EMAIL_ADDRESS` | Your email address | `your.email@gmail.com` |
 | `EMAIL_APP_PASSWORD` | App password from Step 2 | `abcd efgh ijkl mnop` |
-| `SEARCH_NAME` | Name/keyword to search for | `John Smith` |
+| `SEARCH_NAME` | Name/keyword to search for | `John Smith (My neo ID in my case)` |
 | `TELEGRAM_BOT_TOKEN` | Bot token from Step 1 | `110201543:AAHdqTcvCH...` |
 | `TELEGRAM_CHAT_ID` | Your chat ID from Step 1 | `123456789` |
-| `IMAP_SERVER` | (Optional) IMAP server | `imap.gmail.com` |
+| `IMAP_SERVER` | IMAP server | `imap.gmail.com` |
 
 **Important Notes:**
-- For Gmail, use `imap.gmail.com` (default)
+- For Gmail, use `imap.gmail.com`
 - For Outlook, use `imap-mail.outlook.com`
 - For Yahoo, use `imap.mail.yahoo.com`
 - The search is case-insensitive
@@ -93,16 +93,16 @@ git push
 
 1. In the **Actions** tab, click on "Email Excel Monitor"
 2. Click **Run workflow** → **Run workflow** (green button)
-3. Wait for it to complete (should take 20-30 seconds)
-4. Click on the workflow run to see logs
-5. Verify it connected successfully
+3. Wait for completion (typically 20-30 seconds)
+4. Click on the workflow run to view logs
+5. Verify successful connection
 
 **Test with a real email:**
 1. Send yourself an email with an Excel attachment containing your search name
 2. Wait up to 5 minutes for the next scheduled run
-3. You should receive a Telegram notification!
+3. You should receive a Telegram notification
 
-## 📋 How It Works
+## How It Works
 
 ```
 Every 5 minutes:
@@ -110,7 +110,7 @@ Every 5 minutes:
   ├─ Python environment is set up
   ├─ Dependencies are installed
   ├─ Script connects to your email via IMAP
-  ├─ Checks for UNREAD emails only
+  ├─ Checks for new emails within the time window
   ├─ Downloads Excel attachments (.xlsx, .xls, .xlsm)
   ├─ Scans every sheet and cell for your name
   ├─ If match found:
@@ -119,11 +119,22 @@ Every 5 minutes:
   │  │  ├─ Attachment filename
   │  │  ├─ Sheet name and cell location
   │  │  └─ Preview of matched content
-  │  └─ Marks email as read
+  │  └─ Marks email as processed
   └─ Workflow completes and waits for next run
 ```
 
-## 🔧 Customization
+## Schedule Configuration
+
+The workflow runs on two schedules:
+
+- **Every 5 minutes** from 7:00 AM to 11:00 PM
+  - Checks emails from the last 90 minutes
+- **Once at 6:00 AM**
+  - Checks emails from the last 12 hours (catches overnight emails)
+
+This ensures no emails are missed while minimizing GitHub Actions usage.
+
+## Customization
 
 ### Change Scan Frequency
 
@@ -166,12 +177,12 @@ if not any(sender in from_email for sender in allowed_senders):
     continue
 ```
 
-## 📊 Monitoring & Logs
+## Monitoring and Logs
 
 ### View Execution History
 1. Go to **Actions** tab
 2. Click on "Email Excel Monitor"
-3. See all runs with status and timestamps
+3. View all runs with status and timestamps
 
 ### View Detailed Logs
 1. Click on any workflow run
@@ -179,85 +190,83 @@ if not any(sender in from_email for sender in allowed_senders):
 3. Expand steps to see detailed output
 
 ### Debug Issues
-- Check if secrets are set correctly
-- Verify app password is valid
-- Ensure IMAP is enabled for your email
+- Verify all secrets are set correctly
+- Confirm app password is valid
+- Ensure IMAP is enabled for your email provider
 - Check Telegram bot token and chat ID
 - Review workflow logs for error messages
 
-## 🔒 Security Best Practices
+## Security Best Practices
 
-✅ **DO:**
+**Recommended:**
 - Use a private repository
 - Use app-specific passwords (never your main password)
 - Regularly rotate your app passwords
 - Review GitHub Actions logs periodically
-- Use a dedicated email if possible
+- Consider using a dedicated email account
 
-❌ **DON'T:**
-- Hardcode any credentials in the code
-- Share your repository publicly with secrets
-- Use your main email password
-- Commit sensitive data to Git
+**Avoid:**
+- Hardcoding credentials in the code
+- Sharing your repository publicly with secrets configured
+- Using your main email password
+- Committing sensitive data to version control
 
-## ⚠️ Limitations & Considerations
+## Limitations and Considerations
 
-- **Polling Delay**: 5-minute intervals mean notifications aren't instant (trade-off for free hosting)
+- **Polling Delay**: 5-minute intervals mean notifications are not instant (trade-off for free hosting)
 - **GitHub Actions Limits**: 
   - Free tier: 2,000 minutes/month
-  - This setup uses ~8-10 minutes/day = ~300 minutes/month
+  - This setup uses approximately 8-10 minutes/day (about 300 minutes/month)
 - **Email Providers**: Some providers may rate-limit IMAP connections
-- **Large Files**: Very large Excel files (>10MB) may slow processing
-- **Unread Only**: Only processes unread emails (won't re-scan read emails)
+- **Large Files**: Very large Excel files (over 10MB) may slow processing
+- **Processing Behavior**: Only processes emails within the configured time window to avoid duplicates
 
-## 🆘 Troubleshooting
+## Troubleshooting
 
 ### "Login Failed" Error
 - Verify app password is correct
-- Ensure 2FA is enabled on your email
-- Check IMAP is enabled in email settings
+- Ensure 2FA is enabled on your email account
+- Check that IMAP is enabled in email settings
 - Try regenerating the app password
 
 ### "No module named 'openpyxl'" Error
-- Check requirements.txt is in repository root
-- Verify workflow file has correct pip install command
+- Check that `requirements.txt` is in the repository root
+- Verify the workflow file includes the correct pip install command
 
 ### No Telegram Notifications
 - Verify bot token and chat ID are correct
-- Make sure you've sent at least one message to the bot
-- Check Telegram bot is not blocked
+- Ensure you have sent at least one message to the bot
+- Check that the Telegram bot is not blocked
 
 ### Workflow Not Running
 - Verify Actions are enabled in repository settings
-- Check cron syntax in workflow file
-- Remember: GitHub may delay scheduled runs by a few minutes
+- Check cron syntax in the workflow file
+- Note that GitHub may delay scheduled runs by a few minutes
 
-## 📈 Usage Statistics
+## Usage Statistics
 
 Each workflow run:
-- **Duration**: ~20-30 seconds
-- **Compute**: ~0.5 GitHub Actions minutes
-- **Frequency**: 288 runs/day (every 5 minutes)
-- **Monthly**: ~144 minutes (~7% of free tier)
+- **Duration**: Approximately 20-30 seconds
+- **Compute**: About 0.5 GitHub Actions minutes
+- **Frequency**: Up to 288 runs/day (every 5 minutes during active hours)
+- **Monthly**: Approximately 144 minutes (about 7% of free tier)
 
-## 🤝 Contributing
+## Use Cases
 
-Feel free to fork this repository and customize it for your needs!
+- **Job Applications**: Receive notifications when your name appears in applicant spreadsheets
+- **Business**: Monitor when you are mentioned in partner or vendor lists
+- **Education**: Track when grades or assignments are posted
+- **Sales**: Get alerts when your name appears in commission sheets
+- **Contests**: Know immediately when results are published
 
-## 📄 License
+## Contributing
 
-MIT License - feel free to use and modify as needed.
+Contributions are welcome. Feel free to fork this repository and customize it for your needs.
 
-## 🎯 Use Cases
+## License
 
-- 📊 **Job Applications**: Get notified when your name appears in applicant spreadsheets
-- 💼 **Business**: Monitor when you're mentioned in partner/vendor lists
-- 🏫 **Education**: Track when grades or assignments are posted
-- 📈 **Sales**: Get alerts when your name appears in commission sheets
-- 🏆 **Contests**: Know immediately when results are published
+MIT License - Free to use and modify as needed.
 
 ---
 
-**Made with ❤️ for automated email monitoring**
-
-*Last Updated: February 2026*
+**Last Updated: February 2026**
